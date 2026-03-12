@@ -1,3 +1,4 @@
+import os
 import requests
 from icalendar import Calendar
 from datetime import datetime
@@ -5,7 +6,7 @@ import pyairtable
 import hashlib
 
 TEAMS = [
-    {"name": "9U White",   "ics_url": "webcal://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=f9cd1378-be84-44e8-9193-eb743180c304&token=6aaec699e5bac2d0b05ba8fbcb03c15b819f4ef602b4ee7d2cda7a8cd110149d"},
+    {"name": "9U White",   "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=f9cd1378-be84-44e8-9193-eb743180c304&token=6aaec699e5bac2d0b05ba8fbcb03c15b819f4ef602b4ee7d2cda7a8cd110149d"},
     #{"name": "10U Blue",  "ics_url": "https://gc.com/ics/TEAM_B_TOKEN"},
     #{"name": "12U",       "ics_url": "https://gc.com/ics/TEAM_C_TOKEN"},
     # ... add all teams
