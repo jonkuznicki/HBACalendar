@@ -11,8 +11,8 @@ TEAMS = [
     # ... add all teams
 ]
 
-AIRTABLE_TOKEN  = "your_token"
-AIRTABLE_BASE   = "your_base_id"
+AIRTABLE_TOKEN = os.environ["AIRTABLE_TOKEN"]
+AIRTABLE_BASE = "appCCNs65WCh10a9R"
 AIRTABLE_TABLE  = "Master Schedule"
 
 def parse_location(location_str):
