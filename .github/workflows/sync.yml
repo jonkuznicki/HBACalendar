@@ -1,0 +1,26 @@
+name: Sync GameChanger Schedules
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'   # runs every 4 hours
+  workflow_dispatch:          # lets you trigger it manually
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests icalendar pyairtable
+
+      - name: Run sync
+        run: python sync.py
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
