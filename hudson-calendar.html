@@ -339,9 +339,6 @@
   <span class="filter-label">Filter</span>
   <select id="f-team" onchange="applyFilters()">
     <option value="">All teams</option>
-    <option value="9U White">9U White</option>
-    <option value="9U Blue">9U Blue</option>
-    <option value="10U Blue">10U Blue</option>
   </select>
   <select id="f-homeaway" onchange="applyFilters()">
     <option value="">Home &amp; Away</option>
@@ -442,6 +439,15 @@ async function init() {
   try {
     const records = await fetchAll();
     ALL_EVENTS = records.map(r => r.fields).filter(f => f.date);
+
+    // Populate team filter dynamically from data
+    const teams = [...new Set(ALL_EVENTS.map(e => e.team_name).filter(Boolean))].sort();
+    const teamSel = document.getElementById('f-team');
+    teams.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      teamSel.appendChild(o);
+    });
 
     // Populate location filter
     const locations = [...new Set(ALL_EVENTS.map(e => extractCity(e.location)).filter(Boolean))].sort();
