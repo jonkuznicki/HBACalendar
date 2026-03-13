@@ -342,7 +342,6 @@
     <option value="9U White">9U White</option>
     <option value="9U Blue">9U Blue</option>
     <option value="10U Blue">10U Blue</option>
-    <option value="13U Blue">13U Blue</option>
   </select>
   <select id="f-homeaway" onchange="applyFilters()">
     <option value="">Home &amp; Away</option>
@@ -482,7 +481,7 @@ function applyFilters() {
     if (team     && e.team_name  !== team)                 return false;
     if (type     && e.event_type !== type)                 return false;
     if (location && extractCity(e.location) !== location) return false;
-    if (homeaway && e.event_type === 'Game' && e.home_away !== homeaway) return false;
+    if (homeaway && (e.event_type !== 'Game' || e.home_away !== homeaway)) return false;
     return true;
   });
 
