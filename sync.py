@@ -130,6 +130,7 @@ def sync_all_teams():
                     "start_time": dtstart.strftime("%H:%M"), "end_time": dtend.strftime("%H:%M"),
                     "event_type": event_type, "event_title": summary,
                     "opponent": opponent, "location": location,
+                    "home_away": ("Away" if " @ " in summary else "Home") if event_type == "Game" else "",
                     "gamechanger_id": uid, "notes": notes,
                     "last_updated": datetime.now().isoformat(),
                 }
