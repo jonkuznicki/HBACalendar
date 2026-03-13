@@ -57,16 +57,14 @@ def extract_opponent(summary, team_name, gc_team_name=""):
 
     return ""
 
-def infer_event_type(summary):
+def infer_event_type(summary, description=""):
     s = (summary or "").lower()
-    if "practice" in s:
-        return "Practice"
-    if "tournament" in s or "tourney" in s:
-        return "Tournament"
-    if "scrimmage" in s:
-        return "Scrimmage"
-    if " vs " in s or " @ " in s:
-        return "Game"
+    d = (description or "").lower()
+    if "practice" in s: return "Practice"
+    if "tournament" in s or "tourney" in s or "classic" in s or "bash" in s: return "Tournament"
+    if "tournament" in d or "tourney" in d: return "Tournament"
+    if "scrimmage" in s: return "Scrimmage"
+    if " vs " in s or " @ " in s: return "Game"
     return "Other"
 
 def get_description(component):
