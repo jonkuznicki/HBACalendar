@@ -5,32 +5,10 @@ from datetime import datetime, date, timedelta
 import pyairtable
 import hashlib
 
-TEAMS = [
-    {
-        "name": "9U White",
-        "gc_name": "Hudson Explorers White 9U",
-        "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=f9cd1378-be84-44e8-9193-eb743180c304&token=6aaec699e5bac2d0b05ba8fbcb03c15b819f4ef602b4ee7d2cda7a8cd110149d"
-    },
-    {
-        "name": "9U Blue",
-        "gc_name": "Hudson Explorers Blue 9U",
-        "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=44a9491e-2152-466f-b914-b97b547294dc&token=fbe979fba7233a284f7dc1f02539f0dc4c0f00d9b7b6d7bbe56d4b988eda2f29"
-    },
-    {
-        "name": "10U Blue",
-        "gc_name": "Hudson Explorers Blue 10U",
-        "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=65b32658-7436-474f-8c8d-355f31058a6f&token=4319174ca15ea730a31609215fbbc4cecb292e699d1cb4b67fc8b1f4eb552c56"
-    },
-    {
-        "name": "13U Blue",
-        "gc_name": "Hudson Blue 13U",
-        "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=bf97ab30-10fa-4deb-bb6a-bd7bea52fc65&token=b060f16af586d8a803ceceb7c278e068a5c1abdeb0658fcd504f992cc287ab02"
-    },
-]
-
 AIRTABLE_TOKEN = os.environ["AIRTABLE_TOKEN"]
 AIRTABLE_BASE  = "appCCNs65WCh10a9R"
 AIRTABLE_TABLE = "Master Schedule"
+TEAMS_TABLE    = "Teams"
 
 def clean_location(loc_str):
     if not loc_str:
@@ -73,15 +51,36 @@ def get_description(component):
         return ""
     return str(desc).strip()
 
+def load_teams(api):
+    table = api.table(AIRTABLE_BASE, TEAMS_TABLE)
+    teams = []
+    for r in table.all():
+        f = r["fields"]
+        if f.get("active") and f.get("ics_url"):
+            teams.append({
+                "name":    f.get("team_name", ""),
+                "gc_name": f.get("gc_name", ""),
+                "ics_url": f.get("ics_url", ""),
+            })
+    print(f"Loaded {len(teams)} active teams from Airtable")
+    return teams
+
 def sync_all_teams():
     api   = pyairtable.Api(AIRTABLE_TOKEN)
     table = api.table(AIRTABLE_BASE, AIRTABLE_TABLE)
+
+    # Load teams from config table
+    teams = load_teams(api)
+    if not teams:
+        print("No active teams found in Teams table — exiting")
+        return
+
     existing = {r["fields"].get("event_id"): r["id"]
                 for r in table.all() if "event_id" in r["fields"]}
 
-    synced_ids = set()  # track every event_id we see in this run
+    synced_ids = set()
 
-    for team in TEAMS:
+    for team in teams:
         print(f"Fetching: {team['name']}")
         resp = requests.get(team["ics_url"], timeout=10)
         resp.raise_for_status()
@@ -165,7 +164,7 @@ def sync_all_teams():
     else:
         print("No stale records to delete")
 
-    print(f"Sync complete: {len(TEAMS)} teams processed")
+    print(f"Sync complete: {len(teams)} teams processed")
 
 if __name__ == "__main__":
     sync_all_teams()
