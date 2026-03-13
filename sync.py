@@ -21,6 +21,11 @@ TEAMS = [
         "gc_name": "Hudson Explorers Blue 10U",
         "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=65b32658-7436-474f-8c8d-355f31058a6f&token=4319174ca15ea730a31609215fbbc4cecb292e699d1cb4b67fc8b1f4eb552c56"
     },
+    {
+        "name": "13U Blue",
+        "gc_name": "Hudson Blue 13U",
+        "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=bf97ab30-10fa-4deb-bb6a-bd7bea52fc65&token=b060f16af586d8a803ceceb7c278e068a5c1abdeb0658fcd504f992cc287ab02"
+    },
 ]
 
 AIRTABLE_TOKEN = os.environ["AIRTABLE_TOKEN"]
