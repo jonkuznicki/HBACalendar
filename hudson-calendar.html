@@ -30,6 +30,9 @@
     align-items: stretch;
     border-bottom: 3px solid var(--carolina);
     min-height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
   .header-brand {
     display: flex; align-items: center; gap: 12px;
@@ -78,6 +81,10 @@
     border-bottom: 1px solid var(--gray100);
     padding: 10px 24px;
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    position: sticky;
+    top: 67px;
+    z-index: 99;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
   }
   .filter-label {
     font-size: 11px; font-weight: 600;
@@ -135,13 +142,14 @@
     font-weight: 700; font-size: 18px; color: var(--navy); letter-spacing: 0.02em;
   }
   .today-btn {
-    font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600;
-    padding: 4px 10px; border: 1.5px solid var(--carolina);
-    border-radius: var(--radius); background: transparent;
-    color: var(--carolina); cursor: pointer; text-transform: uppercase;
-    letter-spacing: 0.06em; transition: all .15s;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+    height: 30px; padding: 0 12px;
+    border: 1.5px solid var(--gray300); border-radius: var(--radius);
+    background: var(--white); cursor: pointer;
+    color: var(--gray700); letter-spacing: 0.04em;
+    transition: all .15s;
   }
-  .today-btn:hover { background: var(--carolina); color: var(--white); }
+  .today-btn:hover { border-color: var(--carolina); color: var(--navy); }
 
   .week-grid {
     display: grid;
