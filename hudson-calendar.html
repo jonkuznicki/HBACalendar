@@ -143,11 +143,11 @@
   }
   .today-btn {
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
-    height: 30px; padding: 0 12px;
+    height: 30px; padding: 0 10px;
     border: 1.5px solid var(--gray300); border-radius: var(--radius);
     background: var(--white); cursor: pointer;
     color: var(--gray700); letter-spacing: 0.04em;
-    transition: all .15s;
+    transition: all .15s; white-space: nowrap; line-height: 30px;
   }
   .today-btn:hover { border-color: var(--carolina); color: var(--navy); }
 
@@ -378,8 +378,8 @@
     <div class="week-nav">
       <button onclick="prevWeek()">&#8249;</button>
       <button onclick="nextWeek()">&#8250;</button>
-      <span class="week-range-label" id="week-range-label"></span>
       <button class="today-btn" onclick="goToday()">Today</button>
+      <span class="week-range-label" id="week-range-label"></span>
     </div>
     <div class="week-grid" id="week-grid"></div>
   </div>
