@@ -130,11 +130,11 @@
     display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
   }
   .week-nav button {
-    width: 30px; height: 30px;
+    height: 30px; width: 30px;
     border: 1.5px solid var(--gray300); border-radius: var(--radius);
     background: var(--white); cursor: pointer; font-size: 16px;
     color: var(--gray700); display: flex; align-items: center; justify-content: center;
-    transition: all .15s;
+    transition: all .15s; flex-shrink: 0;
   }
   .week-nav button:hover { border-color: var(--carolina); color: var(--navy); }
   .week-range-label {
@@ -142,14 +142,12 @@
     font-weight: 700; font-size: 18px; color: var(--navy); letter-spacing: 0.02em;
   }
   .today-btn {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
-    height: 30px; padding: 0 10px;
-    border: 1.5px solid var(--gray300); border-radius: var(--radius);
-    background: var(--white); cursor: pointer;
-    color: var(--gray700); letter-spacing: 0.04em;
-    transition: all .15s; white-space: nowrap; line-height: 30px;
+    width: auto !important;
+    padding: 0 12px !important;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.04em;
   }
-  .today-btn:hover { border-color: var(--carolina); color: var(--navy); }
 
   .week-grid {
     display: grid;
