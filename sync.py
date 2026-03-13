@@ -73,10 +73,10 @@ def get_description(component):
 def sync_all_teams():
     api   = pyairtable.Api(AIRTABLE_TOKEN)
     table = api.table(AIRTABLE_BASE, AIRTABLE_TABLE)
-
-    # Build lookup of existing records by event_id
     existing = {r["fields"].get("event_id"): r["id"]
                 for r in table.all() if "event_id" in r["fields"]}
+
+    synced_ids = set()  # track every event_id we see in this run
 
     for team in TEAMS:
         print(f"Fetching: {team['name']}")
@@ -85,90 +85,70 @@ def sync_all_teams():
         cal = Calendar.from_ical(resp.content)
 
         for component in cal.walk():
-            if component.name != "VEVENT":
-                continue
-
+            if component.name != "VEVENT": continue
             uid        = str(component.get("UID", ""))
             summary    = str(component.get("SUMMARY", ""))
             loc        = str(component.get("LOCATION", ""))
             desc       = get_description(component)
             dtstart    = component.get("DTSTART").dt
             dtend      = component.get("DTEND").dt
-
             event_type = infer_event_type(summary)
             opponent   = extract_opponent(summary, team["name"], team.get("gc_name", ""))
             location   = clean_location(loc)
-
-            # Include notes for Practice, Tournament, and Other
             notes = desc if event_type in ("Practice", "Tournament", "Other") and desc else ""
-
-            # Detect all-day events (date object, not datetime)
             is_allday = isinstance(dtstart, date) and not isinstance(dtstart, datetime)
 
             if is_allday:
-                # Expand multi-day events into one record per day
                 current_day = dtstart
-                last_day    = dtend - timedelta(days=1)  # ICS end date is exclusive
+                last_day    = dtend - timedelta(days=1)
                 total_days  = (dtend - dtstart).days
                 day_num     = 1
-
                 while current_day <= last_day:
                     day_label = f" (Day {day_num} of {total_days})" if total_days > 1 else ""
-
-                    event_id = hashlib.md5(
-                        f"{team['name']}-{uid}-{current_day}".encode()
-                    ).hexdigest()[:12]
-
+                    event_id = hashlib.md5(f"{team['name']}-{uid}-{current_day}".encode()).hexdigest()[:12]
+                    synced_ids.add(event_id)
                     record = {
-                        "event_id":       event_id,
-                        "team_name":      team["name"],
-                        "date":           current_day.strftime("%Y-%m-%d"),
-                        "start_time":     "All Day",
-                        "end_time":       "",
-                        "event_type":     event_type,
-                        "event_title":    summary + day_label,
-                        "opponent":       opponent,
-                        "location":       location,
-                        "gamechanger_id": uid,
-                        "notes":          notes,
-                        "last_updated":   datetime.now().isoformat(),
+                        "event_id": event_id, "team_name": team["name"],
+                        "date": current_day.strftime("%Y-%m-%d"),
+                        "start_time": "All Day", "end_time": "",
+                        "event_type": event_type, "event_title": summary + day_label,
+                        "opponent": opponent, "location": location,
+                        "gamechanger_id": uid, "notes": notes,
+                        "last_updated": datetime.now().isoformat(),
                     }
-
-                    if event_id in existing:
-                        table.update(existing[event_id], record)
-                    else:
-                        table.create(record)
-
+                    if event_id in existing: table.update(existing[event_id], record)
+                    else: table.create(record)
                     current_day += timedelta(days=1)
-                    day_num     += 1
-
+                    day_num += 1
             else:
-                # Normal timed event
-                event_id = hashlib.md5(
-                    f"{team['name']}-{uid}".encode()
-                ).hexdigest()[:12]
-
+                event_id = hashlib.md5(f"{team['name']}-{uid}".encode()).hexdigest()[:12]
+                synced_ids.add(event_id)
                 record = {
-                    "event_id":       event_id,
-                    "team_name":      team["name"],
-                    "date":           dtstart.strftime("%Y-%m-%d"),
-                    "start_time":     dtstart.strftime("%H:%M"),
-                    "end_time":       dtend.strftime("%H:%M"),
-                    "event_type":     event_type,
-                    "event_title":    summary,
-                    "opponent":       opponent,
-                    "location":       location,
-                    "gamechanger_id": uid,
-                    "notes":          notes,
-                    "last_updated":   datetime.now().isoformat(),
+                    "event_id": event_id, "team_name": team["name"],
+                    "date": dtstart.strftime("%Y-%m-%d"),
+                    "start_time": dtstart.strftime("%H:%M"), "end_time": dtend.strftime("%H:%M"),
+                    "event_type": event_type, "event_title": summary,
+                    "opponent": opponent, "location": location,
+                    "gamechanger_id": uid, "notes": notes,
+                    "last_updated": datetime.now().isoformat(),
                 }
-
-                if event_id in existing:
-                    table.update(existing[event_id], record)
-                else:
-                    table.create(record)
-
+                if event_id in existing: table.update(existing[event_id], record)
+                else: table.create(record)
         print(f"  Done: {team['name']}")
+
+    # Delete any Airtable records that no longer exist in GameChanger
+    stale_ids = [airtable_id for event_id, airtable_id in existing.items()
+                 if event_id not in synced_ids]
+    if stale_ids:
+        print(f"Deleting {len(stale_ids)} stale records...")
+        # Airtable batch delete max 10 at a time
+        for i in range(0, len(stale_ids), 10):
+            batch = stale_ids[i:i+10]
+            for rid in batch:
+                table.delete(rid)
+        print(f"  Deleted {len(stale_ids)} records")
+    else:
+        print("No stale records to delete")
 
     print(f"Sync complete: {len(TEAMS)} teams processed")
 
