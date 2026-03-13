@@ -113,6 +113,7 @@ def sync_all_teams():
                         "start_time": "All Day", "end_time": "",
                         "event_type": event_type, "event_title": summary + day_label,
                         "opponent": opponent, "location": location,
+                        "home_away": "Away" if " @ " in summary else "Home" if " vs " in summary else "",
                         "gamechanger_id": uid, "notes": notes,
                         "last_updated": datetime.now().isoformat(),
                     }
