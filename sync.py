@@ -7,9 +7,7 @@ import hashlib
 
 TEAMS = [
     {"name": "9U White", "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=f9cd1378-be84-44e8-9193-eb743180c304&token=6aaec699e5bac2d0b05ba8fbcb03c15b819f4ef602b4ee7d2cda7a8cd110149d"},
-    {"name": "9U Blue", "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=44a9491e-2152-466f-b914-b97b547294dc&token=fbe979fba7233a284f7dc1f02539f0dc4c0f00d9b7b6d7bbe56d4b988eda2f29
- "},
-
+    {"name": "9U Blue", "ics_url": "https://api.team-manager.gc.com/ics-calendar-documents/user/e40c6f49-509e-47d2-a597-4740188fd1ee.ics?teamId=44a9491e-2152-466f-b914-b97b547294dc&token=fbe979fba7233a284f7dc1f02539f0dc4c0f00d9b7b6d7bbe56d4b988eda2f29"},
     # add more teams here
 ]
 
