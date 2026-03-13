@@ -95,11 +95,12 @@ def sync_all_teams():
             desc       = get_description(component)
             dtstart    = component.get("DTSTART").dt
             dtend      = component.get("DTEND").dt
-            event_type = infer_event_type(summary)
+            event_type = infer_event_type(summary, desc)
             opponent   = extract_opponent(summary, team["name"], team.get("gc_name", ""))
             location   = clean_location(loc)
-            notes = desc if event_type in ("Practice", "Tournament", "Other") and desc else ""
-            is_allday = isinstance(dtstart, date) and not isinstance(dtstart, datetime)
+            notes      = desc if event_type in ("Practice", "Tournament", "Other") and desc else ""
+            is_allday  = isinstance(dtstart, date) and not isinstance(dtstart, datetime)
+            home_away  = ("Away" if " @ " in summary else "Home") if event_type == "Game" else ""
 
             if is_allday:
                 current_day = dtstart
@@ -111,14 +112,19 @@ def sync_all_teams():
                     event_id = hashlib.md5(f"{team['name']}-{uid}-{current_day}".encode()).hexdigest()[:12]
                     synced_ids.add(event_id)
                     record = {
-                        "event_id": event_id, "team_name": team["name"],
-                        "date": current_day.strftime("%Y-%m-%d"),
-                        "start_time": "All Day", "end_time": "",
-                        "event_type": event_type, "event_title": summary + day_label,
-                        "opponent": opponent, "location": location,
-                        "home_away": ("Away" if " @ " in summary else "Home") if event_type == "Game" else "",
-                        "gamechanger_id": uid, "notes": notes,
-                        "last_updated": datetime.now().isoformat(),
+                        "event_id":      event_id,
+                        "team_name":     team["name"],
+                        "date":          current_day.strftime("%Y-%m-%d"),
+                        "start_time":    "All Day",
+                        "end_time":      "",
+                        "event_type":    event_type,
+                        "event_title":   summary + day_label,
+                        "opponent":      opponent,
+                        "location":      location,
+                        "home_away":     home_away,
+                        "gamechanger_id": uid,
+                        "notes":         notes,
+                        "last_updated":  datetime.now().isoformat(),
                     }
                     if event_id in existing: table.update(existing[event_id], record)
                     else: table.create(record)
@@ -128,14 +134,19 @@ def sync_all_teams():
                 event_id = hashlib.md5(f"{team['name']}-{uid}".encode()).hexdigest()[:12]
                 synced_ids.add(event_id)
                 record = {
-                    "event_id": event_id, "team_name": team["name"],
-                    "date": dtstart.strftime("%Y-%m-%d"),
-                    "start_time": dtstart.strftime("%H:%M"), "end_time": dtend.strftime("%H:%M"),
-                    "event_type": event_type, "event_title": summary,
-                    "opponent": opponent, "location": location,
-                    "home_away": ("Away" if " @ " in summary else "Home") if event_type == "Game" else "",
-                    "gamechanger_id": uid, "notes": notes,
-                    "last_updated": datetime.now().isoformat(),
+                    "event_id":      event_id,
+                    "team_name":     team["name"],
+                    "date":          dtstart.strftime("%Y-%m-%d"),
+                    "start_time":    dtstart.strftime("%H:%M"),
+                    "end_time":      dtend.strftime("%H:%M"),
+                    "event_type":    event_type,
+                    "event_title":   summary,
+                    "opponent":      opponent,
+                    "location":      location,
+                    "home_away":     home_away,
+                    "gamechanger_id": uid,
+                    "notes":         notes,
+                    "last_updated":  datetime.now().isoformat(),
                 }
                 if event_id in existing: table.update(existing[event_id], record)
                 else: table.create(record)
@@ -146,7 +157,6 @@ def sync_all_teams():
                  if event_id not in synced_ids]
     if stale_ids:
         print(f"Deleting {len(stale_ids)} stale records...")
-        # Airtable batch delete max 10 at a time
         for i in range(0, len(stale_ids), 10):
             batch = stale_ids[i:i+10]
             for rid in batch:
