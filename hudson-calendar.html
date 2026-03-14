@@ -200,7 +200,26 @@
   .week-more:hover { color: var(--navy); }
 
   /* ── AGENDA ── */
-  .section-title {
+  .agenda-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .agenda-header .section-title { margin-bottom: 0; }
+  .toggle-past-btn {
+    font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border: 1.5px solid var(--gray300);
+    border-radius: var(--radius); background: transparent;
+    color: var(--gray500); cursor: pointer; text-transform: uppercase;
+    letter-spacing: 0.05em; transition: all .15s;
+  }
+  .toggle-past-btn:hover { border-color: var(--carolina); color: var(--navy); }
+  .toggle-past-btn.active { border-color: var(--carolina); color: var(--carolina); background: #edf6fc; }
+  .week-count-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    background: var(--carolina); color: var(--white);
+    border-radius: 99px; padding: 1px 5px; margin-left: 3px;
+    line-height: 1.4; vertical-align: middle;
+  }
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700; font-size: 12px;
     text-transform: uppercase; letter-spacing: 0.1em;
@@ -213,6 +232,7 @@
     border: 1px solid var(--gray100);
   }
   .day-block { margin-bottom: 18px; }
+  .day-block.past-day { opacity: 0.55; }
   .day-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; }
   .day-date-big {
     font-family: 'Barlow Condensed', sans-serif;
@@ -380,7 +400,10 @@
 
   <!-- AGENDA -->
   <div class="agenda-section">
-    <div class="section-title" id="agenda-title">Upcoming events</div>
+    <div class="agenda-header">
+      <div class="section-title" id="agenda-title">Upcoming events</div>
+      <button class="toggle-past-btn" id="toggle-past-btn" onclick="togglePast()">Show past events</button>
+    </div>
     <div id="agenda-list"></div>
   </div>
 </div>
@@ -403,6 +426,7 @@ const AIRTABLE_TABLE = 'Master Schedule';
 
 let ALL_EVENTS = [];
 let filtered   = [];
+let showPast   = false;
 const today    = new Date();
 const todayStr = today.toISOString().slice(0, 10);
 
@@ -440,8 +464,12 @@ async function init() {
     const records = await fetchAll();
     ALL_EVENTS = records.map(r => r.fields).filter(f => f.date);
 
-    // Populate team filter dynamically from data
-    const teams = [...new Set(ALL_EVENTS.map(e => e.team_name).filter(Boolean))].sort();
+    // Populate team filter dynamically — sorted by age group number
+    const teams = [...new Set(ALL_EVENTS.map(e => e.team_name).filter(Boolean))].sort((a, b) => {
+      const numA = parseInt(a.match(/\d+/) || [999]);
+      const numB = parseInt(b.match(/\d+/) || [999]);
+      return numA !== numB ? numA - numB : a.localeCompare(b);
+    });
     const teamSel = document.getElementById('f-team');
     teams.forEach(t => {
       const o = document.createElement('option');
@@ -593,7 +621,7 @@ function renderWeek() {
     html += `<div class="week-col">`;
     html += `<div class="week-col-header${isT ? ' is-today' : ''}">
       <span class="week-dow">${DOWS[d.getDay()]}</span>
-      <span class="week-day-num">${d.getDate()}</span>
+      <span class="week-day-num">${d.getDate()}${evts.length > 0 ? `<span class="week-count-badge">${evts.length}</span>` : ''}</span>
     </div>`;
     html += `<div class="week-body" onclick="scrollToDay('${ds}')">`;
 
@@ -639,21 +667,32 @@ function scrollToDay(ds) {
 }
 
 // ── AGENDA ────────────────────────────────────────────────────────────────
+function togglePast() {
+  showPast = !showPast;
+  const btn = document.getElementById('toggle-past-btn');
+  btn.textContent = showPast ? 'Hide past events' : 'Show past events';
+  btn.classList.toggle('active', showPast);
+  renderAgenda();
+}
+
 function renderAgenda() {
-  const upcoming = filtered
-    .filter(e => e.date >= todayStr)
-    .sort((a,b) => (a.date + (a.start_time||'')).localeCompare(b.date + (b.start_time||'')));
+  const events = showPast
+    ? [...filtered].sort((a,b) => (a.date + (a.start_time||'')).localeCompare(b.date + (b.start_time||'')))
+    : filtered.filter(e => e.date >= todayStr).sort((a,b) => (a.date + (a.start_time||'')).localeCompare(b.date + (b.start_time||'')));
 
-  document.getElementById('agenda-title').textContent = `Upcoming events (${upcoming.length})`;
+  const upcomingCount = filtered.filter(e => e.date >= todayStr).length;
+  document.getElementById('agenda-title').textContent = showPast
+    ? `All events (${events.length})`
+    : `Upcoming events (${upcomingCount})`;
 
-  if (upcoming.length === 0) {
+  if (events.length === 0) {
     document.getElementById('agenda-list').innerHTML =
-      '<div class="agenda-empty">No upcoming events match your filters.</div>';
+      '<div class="agenda-empty">No events match your filters.</div>';
     return;
   }
 
   const byDay = {};
-  upcoming.forEach(e => {
+  events.forEach(e => {
     if (!byDay[e.date]) byDay[e.date] = [];
     byDay[e.date].push(e);
   });
@@ -668,7 +707,7 @@ function renderAgenda() {
     const lbl     = isToday ? 'Today' : isTom ? 'Tomorrow'
       : dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
 
-    html += `<div class="day-block" id="day-${ds}">`;
+    html += `<div class="day-block${ds < todayStr ? ' past-day' : ''}" id="day-${ds}">`;
     html += `<div class="day-header">
       <span class="day-date-big">${dt.getDate()}</span>
       <span class="day-date-label${isToday?' today-label':''}">${lbl}</span>
