@@ -1,5 +1,7 @@
 import os
+import time
 import requests
+from requests.exceptions import RetryError
 from icalendar import Calendar
 from datetime import datetime, date, timedelta
 import pyairtable
@@ -9,6 +11,21 @@ AIRTABLE_TOKEN = os.environ["AIRTABLE_TOKEN"]
 AIRTABLE_BASE  = "appCCNs65WCh10a9R"
 AIRTABLE_TABLE = "Master Schedule"
 TEAMS_TABLE    = "Teams"
+
+REQUEST_DELAY = 0.3       # ~3.3 requests/sec, below Airtable's 5/sec/base limit
+RATE_LIMIT_SLEEP = 30     # Airtable recommends waiting after 429s
+MAX_RETRIES = 3
+
+def airtable_call(fn, *args, **kwargs):
+    for attempt in range(MAX_RETRIES):
+        try:
+            time.sleep(REQUEST_DELAY)
+            return fn(*args, **kwargs)
+        except RetryError:
+            if attempt == MAX_RETRIES - 1:
+                raise
+            print(f"Airtable rate limit hit. Sleeping {RATE_LIMIT_SLEEP}s before retry...")
+            time.sleep(RATE_LIMIT_SLEEP)
 
 def clean_location(loc_str):
     if not loc_str:
@@ -54,8 +71,8 @@ def get_description(component):
 def load_teams(api):
     table = api.table(AIRTABLE_BASE, TEAMS_TABLE)
     teams = []
-    for r in table.all():
-        f = r["fields"]
+    for r in airtable_call(table.all):
+    f = r["fields"]
         if f.get("active") and f.get("ics_url"):
             teams.append({
                 "name":    f.get("team_name", ""),
@@ -75,8 +92,11 @@ def sync_all_teams():
         print("No active teams found in Teams table — exiting")
         return
 
-    existing = {r["fields"].get("event_id"): r["id"]
-                for r in table.all() if "event_id" in r["fields"]}
+    existing = {
+    r["fields"].get("event_id"): r["id"]
+    for r in airtable_call(table.all)
+    if "event_id" in r["fields"]
+}
 
     synced_ids = set()
 
